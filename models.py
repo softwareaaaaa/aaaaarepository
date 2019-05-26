@@ -73,32 +73,33 @@ class Role(models.Model):
     fun4 = models.BooleanField(default=False)
     fun5 = models.BooleanField(default=False)
     fun6 = models.BooleanField(default=False)
+    classfun = models.BooleanField(default=False)
+    sportfun = models.BooleanField(default=False)
+    gymfun = models.BooleanField(default=False)
+    firstfun = models.BooleanField(default=False)
+    secondfun = models.BooleanField(default=False)
+    thirdfun = models.BooleanField(default=False)
 
-class Contract(models.Model):
-    contractnum = models.AutoField(primary_key=True)
-    contractname = models.CharField(max_length=40)
-    clientnum = models.ForeignKey('Client',on_delete=models.SET_NULL,null=True)
+class Application(models.Model):
+    applinum = models.AutoField(primary_key=True)
+    appliname = models.CharField(max_length=40)
+    fieldnum = models.ForeignKey('Field',on_delete=models.SET_NULL,null=True)
     begintime = models.DateField()
     endtime = models.DateField()
     content = models.CharField(max_length=200)
     draft = models.ForeignKey('MyUser',on_delete=models.SET_NULL,null=True)
-    state = models.IntegerField(default=0,choices=((-1,'未通过'),(0,'待分配'),(1,'会签中'),(2,'定稿中'),(3,'审批中'),(4,'签订中'),(5,'签订完成')))
+    state = models.IntegerField(default=0,choices=((-1,'未通过'),(0,'待分配'),(1,'会签中'),(2,'审批中'),(3,'签订中'),(4,'签订完成')))
     file = models.FileField(upload_to='uploads/',blank=True,null=True,default=None)
 
-class Client(models.Model):
-    clientnum = models.AutoField(primary_key=True)
-    clientname = models.CharField(max_length=40)
-    address = models.CharField(max_length=100,default='')
-    tel = models.CharField(max_length=20,default='')
-    fax = models.CharField(max_length=20,default='')
-    code = models.CharField(max_length=10,default='')
-    bank = models.CharField(max_length=50,default='')
-    account = models.CharField(max_length=50,default='')
+class Field(models.Model):
+    fieldnum = models.AutoField(primary_key=True)
+    fieldname = models.CharField(max_length=40)
+    category = models.CharField(max_length=20,default='')
     addition = models.CharField(max_length=100,default='')
     username = models.ForeignKey('MyUser',on_delete=models.CASCADE)
 
 class Administration(models.Model):
-    contractnum = models.OneToOneField('Contract',on_delete=models.CASCADE,primary_key=True)
+    applinum = models.OneToOneField('Application',on_delete=models.CASCADE,primary_key=True)
     countersign1 = models.ForeignKey('MyUser',on_delete=models.SET_NULL,null=True,related_name='c1')
     copinion1 = models.CharField(max_length=100,null=True,default=None)
     ctime1 = models.DateTimeField(null=True,default=None)
@@ -139,5 +140,28 @@ class log(models.Model):
 class message(models.Model):
     id = models.AutoField(primary_key=True)
     username = models.ForeignKey('MyUser',on_delete=models.CASCADE,null=True)
-    contractnum = models.ForeignKey('Contract',on_delete=models.CASCADE,null=True)
-    missionnum = models.IntegerField(default=0, choices=((0, '分配'), (1, '会签'), (2, '定稿'), (3, '审批'), (4, '签订')))
+    applinum = models.ForeignKey('Application',on_delete=models.CASCADE,null=True)
+    missionnum = models.IntegerField(default=0, choices=((0, '分配'), (1, '会签'), (2, '审批'), (3, '签订')))
+	
+	
+#报名
+class Enrollment:
+    username = models.ForeignKey('MyUser', on_delete=models.CASCADE)
+    activityname = models.ForeignKey('Activities', on_delete=models.CASCADE)
+
+
+#订单
+class Payment:
+    paymentid = models.AutoField(primary_key=True)
+    username = models.ForeignKey('MyUser', on_delete=models.CASCADE)
+    activitytime = models.ForeignKey('activities', on_delete=models.CASCADE, null=True)
+    is_paid = models.BooleanField(default=False)
+
+#活动
+class Activities:
+    activityid = models.AutoField(primary_key=True)
+    activityname = models.CharField(max_length=40)
+    activitytype = models.IntegerField(default=0, choices=((0, '学术类'), (1, '体育类'), (2, '科技类'), (3, '文化类')))
+    activitytime = models.DateTimeField()
+    activitycapacity = models.IntegerField(max_length=40)
+    openenrolltime = models.DateTimeField()	
