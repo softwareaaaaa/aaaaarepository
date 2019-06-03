@@ -1,0 +1,26 @@
+{% load static %}
+<!doctype html>
+<html  style="overflow-x: hidden; overflow-y: auto;">
+
+<head>
+    <meta charset="utf-8">
+    <title>日志</title>
+    <link rel="stylesheet" href="{% static 'style/my.css' %}">
+
+    <link rel="stylesheet" href="{% static 'style/others.css' %}">
+    <link rel="stylesheet" href="{% static 'style/mdui.min.css' %}">
+    <link rel="stylesheet" href="{% static 'style/index.css' %}">
+    <link rel="stylesheet" href="{% static 'style/bulma.min.css' %}">
+
+    <script defer src="{% static 'javascript/all.js' %}"></script>
+    <script src="{% static 'javascript/vue.js' %}"></script>
+    <script src="{% static 'javascript/index.js' %}"></script>
+    <script src="{% static 'javascript/jquery.min.js' %}"></script>
+    <script src="{% static 'javascript/mdui.min.js' %}"></script>
+</head>
+<body>
+<el-container id="table">
+    日志
+</el-container>
+</body>
+</html>

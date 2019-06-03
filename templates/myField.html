@@ -1,0 +1,281 @@
+{% load static %}
+<!doctype html>
+<html style="overflow-x: hidden; overflow-y: auto;">
+
+<head>
+    <meta charset="utf-8">
+    <title>我的场地</title>
+    <link rel="stylesheet" href="{% static 'style/my.css' %}">
+
+    <link rel="stylesheet" href="{% static 'style/others.css' %}">
+    <link rel="stylesheet" href="{% static 'style/mdui.min.css' %}">
+    <link rel="stylesheet" href="{% static 'style/index.css' %}">
+    <link rel="stylesheet" href="{% static 'style/bulma.min.css' %}">
+
+    <script defer src="{% static 'javascript/all.js' %}"></script>
+    <script src="{% static 'javascript/vue.js' %}"></script>
+    <script src="{% static 'javascript/index.js' %}"></script>
+    <script src="{% static 'javascript/jquery.min.js' %}"></script>
+    <script src="{% static 'javascript/mdui.min.js' %}"></script>
+</head>
+<body>
+<el-container id="table">
+    <el-dialog title="添加场地" :visible.sync="showNewClient">
+        <el-form :model="form" ref="form" :rules="rules">
+            <el-form-item label="场地名" :label-width="formLabelWidth" prop="clientname">
+                <el-input v-model="form.clientname" autocomplete="off"></el-input>
+            </el-form-item>
+            <el-form-item label="场地类型" :label-width="formLabelWidth" prop="tel">
+                <el-input v-model="form.tel" autocomplete="off"></el-input>
+            </el-form-item>
+
+            <el-form-item label="场地描述" :label-width="formLabelWidth" prop="addition">
+                <el-input v-model="form.addition" autocomplete="off"></el-input>
+            </el-form-item>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+            <el-button @click="clear();">重 置</el-button>
+            <el-button type="primary" @click="addClient">提 交</el-button>
+        </div>
+    </el-dialog>
+    <el-dialog title="修改场地信息" :visible.sync="showEditClient">
+        <el-form :model="form" ref="form" :rules="rules">
+            <el-form-item label="场地编号" :label-width="formLabelWidth" prop="clientnum">
+                <el-input v-model="form.clientnum" :disabled="true"></el-input>
+            </el-form-item>
+            <el-form-item label="场地名" :label-width="formLabelWidth" prop="clientname">
+                <el-input v-model="form.clientname" :disabled="true"></el-input>
+            </el-form-item>
+            <el-form-item label="场地类型" :label-width="formLabelWidth" prop="tel">
+                <el-input v-model="form.tel" :disabled="true"></el-input>
+            </el-form-item>
+
+            <el-form-item label="备注" :label-width="formLabelWidth" prop="addition">
+                <el-input v-model="form.addition"></el-input>
+            </el-form-item>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+            <el-button @click="clear();">重 置</el-button>
+            <el-button type="primary" @click="saveRow">提 交</el-button>
+        </div>
+    </el-dialog>
+    <el-header style="text-align: right; font-size: 12px">
+        <el-row :gutter="20">
+            <el-col :span="8">
+                <el-input
+                        placeholder="输入场地名搜索"
+                        v-model="search"
+                        size="mini"
+                        clearable>
+                </el-input>
+            </el-col>
+            <el-col :span="16">
+                <el-button icon="el-icon-circle-plus-outline" @click="showNewClient=true">添加场地</el-button>
+            </el-col>
+        </el-row>
+    </el-header>
+    <el-table ref="filterTable"
+              :data="tableData.filter(data => !search || data.clientname.toLowerCase().includes(search.toLowerCase()))"
+              style="width: 100%">
+        <el-table-column type="expand">
+            <div slot-scope="c">
+                <el-form label-position="left" inline class="demo-table-expand">
+                    <el-form-item label="场地名称">
+                        <span>[[ c.row.clientname ]]</span>
+                    </el-form-item>
+
+                    <el-form-item label="备注">
+                        <span>[[ c.row.addition ]]</span>
+                    </el-form-item>
+                </el-form>
+            </div>
+        </el-table-column>
+        <el-table-column prop="clientnum" label="场地编号" sortable align="center"></el-table-column>
+        <el-table-column prop="clientname" label="场地名称" align="center"></el-table-column>
+        <el-table-column prop="tel" label="场地类型" align="center"></el-table-column>
+        <el-table-column align="center">
+            <div slot-scope="scope">
+                <el-button size="mini" type="primary" style="margin-left: 0px;"
+                           @click="deleteRow(scope.row,scope.$index)">删除我的场地
+                </el-button>
+                <el-button size="mini" type="primary" style="margin-left: 0px;"
+                           @click="editRow(scope.row)">修改场地信息
+                </el-button>
+            </div>
+        </el-table-column>
+    </el-table>
+</el-container>
+</body>
+<script>
+    var vue = new Vue({
+        delimiters: ['[[', ']]'],
+        el: '#table',
+        created: function () {
+            // 页面刚被渲染时向后端发送ajax请求数据  解析json后放入vue的变量tableData里
+            $.ajax({
+                url: "/myField",
+                type: "POST",
+                data: {"type": "init"},
+                success: function (data1) {
+                    let clients = data1.clients;
+                    for (var i = 0; i < clients.length; i++) {
+                        let client = clients[i];
+                        vue.tableData.push(
+                            {
+                                clientnum: client.clientnum,
+                                clientname: client.clientname,
+                                tel: client.tel,
+                                addition: client.addition,
+                            }
+                        );
+                    }
+                }
+            });
+        },
+        data() {
+            var validateTel = (rule, value, callback) => {
+                /*if (!(/^1(3|4|5|7|8)\d{9}$/.test(value))) {
+                    callback(new Error('手机号码有误，请重新输入！'));
+                }
+                else {
+                    callback();
+                }*/
+                callback();
+            };
+
+            return {
+                search: '',
+                fd: '',
+                formLabelWidth: '100px',
+                tableData: [],
+                showNewClient: false,
+                showEditClient: false,
+                form: {
+                    clientnum: '',
+                    clientname: '',
+                    tel: '',
+                    addition: '',
+                },
+                rules: {
+                    clientname: [{required: true, message: '请输入场地名', trigger: 'blur'}], //场地名
+                    tel: [
+                        {required: true, message: '不可为空！', trigger: 'blur'},
+                    ],
+
+                    addition: [{required: true, message: '请输入场地描述', trigger: 'blur'}],
+                },
+            }
+        },
+        methods: {
+            addClient() {
+                this.$refs['form'].validate((valid) => {
+                    if (valid) {
+                        vue.fd = new FormData();
+                        vue.fd.append("type", "add");
+                        vue.fd.append("clientname", this.form.clientname);
+                        vue.fd.append("tel", this.form.tel);
+
+                        vue.fd.append("addition", this.form.addition);
+                        $.ajax({
+                            url: "/myField",
+                            type: "POST",
+                            processData: false,
+                            contentType: false,
+                            data: vue.fd
+                            ,
+                            success: function (data1) {
+                                if(data1.msg == "success"){
+                                   vue.$message.success('场地添加成功！');
+                                    window.location.href = "";
+                                }
+                                else{
+                                    vue.$message.error('场地已存在！');
+                                }
+
+                            }
+                        })
+                    } else {
+                        return false;
+                    }
+                });
+            },
+            clear() {
+                vue.$confirm('此操作将清空此场地所有信息, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    this.form.clientname = '';
+                    this.form.tel = '';
+
+                    this.form.addition = '';
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消清空'
+                    });
+                });
+            },
+            deleteRow(tempRow, order) {
+                vue.$confirm('此操作将永久删除该场地, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    vue.fd = new FormData();
+                    vue.fd.append("type", "delete");
+                    vue.fd.append("clientnum", tempRow.clientnum);
+                    $.ajax({
+                        url: "/myField",
+                        type: "POST",
+                        processData: false,
+                        contentType: false,
+                        data: vue.fd,
+                        success: function () {
+                            vue.$message.success('删除成功！');
+                            vue.tableData.splice(order, 1);
+                        }
+                    })
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消删除'
+                    });
+                });
+            },
+            editRow(row) {
+                this.form = row;
+                this.showEditClient = true;
+            },
+            saveRow() {
+                this.$refs['form'].validate((valid) => {
+                    if (valid) {
+                        vue.fd = new FormData();
+                        vue.fd.append("type", "save");
+                        vue.fd.append("clientnum", this.form.clientnum);
+                        vue.fd.append("tel", this.form.tel);
+
+                        vue.fd.append("addition", this.form.addition);
+                        $.ajax({
+                            url: "/myField",
+                            type: "POST",
+                            processData: false,
+                            contentType: false,
+                            data: vue.fd
+                            ,
+                            success: function (data1) {
+                                if (data1.msg == "success") {
+                                    vue.$message.success('修改成功');
+                                    window.location.href="";
+                                }
+                            }
+                        })
+                    } else {
+                        return false;
+                    }
+                });
+            },
+        }
+    })
+</script>
+</html>
